@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="fr">
+    <meta charset="UTF-8">
+    <!--Page Title-->
+    <title>Hack-Oeil - Les CTFs de Cyrhades</title>
+    <!--Meta Keywords and Description-->
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <link rel="shortcut icon" href="./assets/images/favicon.ico" title="Favicon" />
+    <link rel="stylesheet" href="./assets/css/style.css">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="./assets/css/github.min.css">
+    <script src="./assets/js/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Vérifie si la fenêtre est dans une iframe
+            if (window.self !== window.top) {
+                document.querySelectorAll('a').forEach((link) => {
+                    link.addEventListener('click', (event) => {
+                        const a = event.target.closest('a[href^="http"]');
+                        if (a) {
+                            event.preventDefault();
+                            window.parent.postMessage({
+                                type: "open-external",
+                                url: a.href
+                            }, "*");
+                        }
+                    });
+                });
+            }
+            // Active la coloration syntaxique :
+            if (window.hljs) {
+                hljs.highlightAll();
+            } else {
+                console.error("Highlight.js non chargé !");
+            }
+        });
+    </script>
+</head>
+
+<body>
+
+    <div id="wrapper">
+        <!--Main Content Area-->
+        <main id="content">
+            <!--Ctf-->
+            <section class="ctf scrollto">
+                <article class="row clearfix">
+                    <div class="col-1">
+                        <div class="section-heading">
+                            <h3>Challenge #463</h3>
+                            <h2 class="section-title">Share a Saucisse</h2>
+                            <p>
+                                C’est l’anniversaire de votre ami Adi. Vous vouliez lui faire une blague à sa fête
+                                d’anniversaire en dissimulant un message caché dans chacune des 17 saucisses préparées
+                                pour les invités. Malheureusement, le barbecue a pris feu et Adi n’a pu sauver que 16
+                                des 17 saucisses. Peut-il malgré tout s’en sortir ?
+                                <br />
+                                <img src="./assets/images/share-a-saucisse.png">
+                            </p>
+                            <h4>Fichier à étudier</h4>
+                            <p>
+                                - share-a-saucisse.py<br />
+                                - output.txt
+                            </p>
+                            <hr>
+                            <strong>share-a-saucisse.py</strong>
+                            <pre><code class="language-python">import os
+import json
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
+
+class SSS:
+    def __init__(self, secret, k):
+        self.p = 931620319462745440509259849070939082848977
+        self.k = k
+        self.polynomial = [ int.from_bytes(secret) ]
+        for _ in range(k):
+            self.polynomial.append(int.from_bytes(os.urandom(16)))
+        self.index = int.from_bytes(b"FCSC2024")
+            
+    def eval_poly(self,x):
+        return sum(self.polynomial[j] * (x ** j) for j in range(self.k + 1)) % self.p
+    
+    def generate_share(self):
+        self.index = self.index + 1
+        return self.index, self.eval_poly(self.index)
+
+if __name__ == "__main__":
+    key = os.urandom(16)
+    iv = os.urandom(16)
+    flag = pad(open("flag.txt", "rb").read().strip(), AES.block_size)
+    E = AES.new(key, mode = AES.MODE_CBC, iv = iv)
+    flag_enc = E.encrypt(flag)
+    
+    k = 16
+    s = SSS(key, k)
+    shares = [ s.generate_share() for _ in range(k) ]
+
+    data = {
+        "iv": iv.hex(),
+        "flag_enc": flag_enc.hex(),
+        "shares": shares,
+    }
+    print(json.dumps(data, indent = 4))
+</code></pre>
+                            <strong>output.txt</strong>
+                            <pre>{
+    "iv": "1f07fa2c52e76d19abe62383f3f4103e",
+    "flag_enc": "cab6478f8e16df758c3dc4f341ead6080f115bea34a0c2c7d2932f6422313696f13e446a1fcab0c6fb8a94fe26d4152232b1fb3feb89f3bd3e5b7af28302721a5a6e92b4110f7c7277f25250230d3803",
+    "shares": [
+        [
+            5062981954164503093,
+            295592704039076973906624580976591996843865
+        ],
+        [
+            5062981954164503094,
+            209004930188439163881955907953368403287940
+        ],
+        [
+            5062981954164503095,
+            622179815343336071787005820148341705590050
+        ],
+        [
+            5062981954164503096,
+            153967086004035120510774216957252893647435
+        ],
+        [
+            5062981954164503097,
+            741457506357662231257792123366428898230616
+        ],
+        [
+            5062981954164503098,
+            787514195612053297421449701648953034989506
+        ],
+        [
+            5062981954164503099,
+            431873135086304051018091428068869350417872
+        ],
+        [
+            5062981954164503100,
+            148353684513065439624475775110325979315855
+        ],
+        [
+            5062981954164503101,
+            883554672836808959747136385701580299724697
+        ],
+        [
+            5062981954164503102,
+            68703816104502340580755709758644336491718
+        ],
+        [
+            5062981954164503103,
+            300095267025641291127312360087894875926763
+        ],
+        [
+            5062981954164503104,
+            395883799465512179395458724293475407433062
+        ],
+        [
+            5062981954164503105,
+            636945646889880415338891062635108312640889
+        ],
+        [
+            5062981954164503106,
+            826947832445454687984690742504620312318925
+        ],
+        [
+            5062981954164503107,
+            124235572980474538208096497939579420331075
+        ],
+        [
+            5062981954164503108,
+            621571753435517362317646004958961761260250
+        ]
+    ]
+}
+</pre>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="row clearfix">
+                    <div class="col-1">
+                        <div class="section-heading">
+                            <h3>FCSC 2024</h3>
+                            <h2 class="section-title">Hackropole</h2>
+                            <p class="section-subtitle">
+                                Lien officiel :
+                                <a target="_blank"
+                                    href="https://hackropole.fr/fr/challenges/crypto/fcsc2024-crypto-share-a-saucisse/">FCSC
+                                    2024 -
+                                    Share a Saucisse
+                                </a>
+                                <br />
+                                Auteur: graniter
+                        </div>
+                    </div>
+                </article>
+
+                <article class="row clearfix">
+                    <div class="col-1">
+                        <div class="section-heading">
+                            <h3>Apprentissage</h3>
+                            <h2 class="section-title">Documentations et Vidéos</h2>
+                            <p class="section-subtitle">
+                                Aucune documentation pour le moment
+                            </p>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="row clearfix">
+                    <div class="col-1">
+                        <div class="section-heading">
+                            <h3>Aide</h3>
+                            <h2 class="section-title">Conseils et indices</h2>
+                            <p class="section-subtitle">
+                                <a target="_blank"
+                                    href="https://discord.com/channels/1175764392307077120/1175764601716092948">Fil sur
+                                    le Discord</a>
+                            </p>
+                        </div>
+                    </div>
+                </article>
+            </section>
+            <!--End of Ctf-->
+        </main>
+        <!--End Main Content Area-->
+
+        <a id="scrollUp" href="#wrapper" style="position: fixed; z-index: 1000;"
+            aria-label="Remonter en haut de la page" title="Remonter en tête de site"></a>
+    </div>
+</body>
+
+</html>
